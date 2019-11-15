@@ -1,0 +1,162 @@
+<?php
+class Logincontroller extends CI_Controller{
+	function __construct(){
+		parent::__construct();
+		$this->load->model('Loginmodel');
+	}
+	public function login(){	 
+		$name= $this->input->post()['name'];
+		$password= $this->input->post()['password'];
+		
+		if($this->Loginmodel->can_login($name,$password)){
+			$data = array(
+			'name' =>$name,
+			);
+			$this->session->set_userdata($data);
+			redirect('all-users');
+		}else{
+			
+			$this->session->set_flashdata('error','Invalid Username and Password');
+			redirect('login');
+		}
+	}	
+    public function loginform() {
+		//print_r($this->router->routes);
+		//die;
+		$this->load->view('loginform');
+	
+	}
+	public function logout(){
+		 	  
+		$this->session->sess_destroy();
+		redirect('login');
+	}
+}
+
+///////////////////////////
+<?php
+class Logincontroller extends CI_Controller{
+	function __construct(){
+		parent::__construct();
+		$this->load->model('Loginmodel');
+		$this->load->helper('captcha');
+	}
+	public function login(){
+
+		$name= $this->input->post()['name'];
+		$password= $this->input->post()['password'];
+		$inpcaptcha = $this->input->post()['captcha'];
+		
+		$sessioncaptcha = $this->session->userdata('captchaCode');
+		// echo $inpcaptcha."		New				";
+		// echo $sessioncaptcha."		Session";
+		// die;	
+			if($this->Loginmodel->can_login($name,$password) && ($inpcaptcha == $sessioncaptcha)){
+				
+				$data = array(
+				'name' =>$name,
+				);
+				$this->session->set_userdata($data);
+				redirect('all-users');
+			}
+			else{
+				$this->session->set_flashdata('error','Invalid Username and Password');
+				redirect('login');
+			}			
+	}
+    public function loginform() {
+		
+		 $config = array(
+           'word'          => '',
+        'img_path'      => './images/',
+        'img_url'       => base_url() .'images/',
+        'font_path'     => base_url() . 'system/fonts/texb.ttf',
+        'img_width'     => '150',
+        'img_height'    => 30,
+        'expiration'    => 7200,
+        'word_length'   => 5,
+        'font_size'     => 16,
+        'img_id'        => 'captImg',
+        'pool'          => '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ',
+
+        // White background and border, black text and red grid
+        'colors'        => array(
+                'background' => array(255, 255, 255),
+                'border' => array(255, 255, 255),
+                'text' => array(0, 0, 0),
+                'grid' => array(255, 40, 40)
+        )
+        );
+        $captcha = create_captcha($config);
+       // @unlink($this->session->userdata('captchaCode'));
+		$this->session->unset_userdata('captchaCode');
+		
+        $this->session->set_userdata('captchaCode', $captcha['word']);
+        $data['captchaImg'] = $captcha['image'];
+		// echo $this->session->userdata('captchaCode');
+		// echo $captcha['image'];
+		// die;
+		
+        $this->load->view('loginform', $data);
+
+		// $this->load->view('loginform');
+	
+	}
+	
+	public function refresh()
+    {
+        $config = array(
+           'word'          => '',
+        'img_path'      => './images/',
+        'img_url'       => base_url() .'images/',
+        'font_path'     => base_url() . 'system/fonts/texb.ttf',
+        'img_width'     => '150',
+        'img_height'    => 30,
+        'expiration'    => 7200,
+        'word_length'   => 5,
+        'font_size'     => 16,
+        'img_id'        => 'captImg',
+        'pool'          => '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ',
+
+        // White background and border, black text and red grid
+        'colors'        => array(
+                'background' => array(255, 255, 255),
+                'border' => array(255, 255, 255),
+                'text' => array(0, 0, 0),
+                'grid' => array(255, 40, 40)
+        )
+        );
+        $captcha = create_captcha($config);
+		 @unlink($this->session->userdata('captchaCode'));
+        $this->session->unset_userdata('captchaCode');
+        $this->session->set_userdata('captchaCode', $captcha['word']);
+        echo $captcha['image'];
+    }
+
+	
+	public function logout(){
+		 	  
+		$this->session->sess_destroy();
+		redirect('login');
+	}
+}
+//////////////
+login form
+
+<div class="col-sm-12 col-md-12 col-lg-12">
+					<br><label class="col-sm-12 col-md-12 col-lg-12" style="font-size:15px"> Enter Captcha Code  </label>
+					<br><input type="text" name="captcha" value=""/>
+					</div>
+
+
+
+
+	<div class ="row container col-sm-12 col-md-12 col-lg-12">	
+				<div class ="col-sm-4 col-md-4 col-lg-4"> </div>
+				<div class="col-sm-4 col-md-4 col-lg-4">
+					<p id="image_captcha"><?php echo $captchaImg; ?></p>
+					<a href="javascript:void(0);" class="captcha-refresh" ><img src="<?php echo base_url().'images/refresh.png'; ?>"/>Click Here to Refresh Captcha</a>
+				</div>
+				<div class="col-sm-4 col-md-4 col-lg-4"></div>
+			</div>
+			
